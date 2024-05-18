@@ -1,0 +1,11 @@
+@media (max-width: 991.98px) {
+    .sub-headline {
+        width: 100%;
+    }
+}
+
+@media (max-width: 575.98px) {
+    section.detail-story .thumbnail-story {
+        aspect-ratio: 3/2 !important;
+    }
+}
