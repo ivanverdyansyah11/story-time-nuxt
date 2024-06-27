@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth';
-import { imageUrl } from "~/helpers/globalVariable";
+import {alertMessage, alertPage, imageUrl, resetAlert} from "~/helpers/globalVariable";
 
 definePageMeta({
   layout: 'user',
@@ -8,10 +8,23 @@ definePageMeta({
 
 const authStore = useAuthStore();
 await authStore.loadUserFromCookies();
+
+onBeforeRouteLeave((to, from, next) => {
+  resetAlert();
+  next();
+});
+
+onBeforeRouteUpdate((to, from, next) => {
+  resetAlert();
+  next();
+});
 </script>
 
 <template>
   <div class="col-6">
+    <div v-if="alertPage == 'Update'" class="alert alert-success w-100" role="alert">
+      {{ alertMessage }}
+    </div>
     <div class="card-user">
       <div class="wrapper-header d-flex align-items-center justify-content-between">
         <h5 class="header-title mb-0">My Profile</h5>
