@@ -3,7 +3,7 @@ import { useAuthStore } from '~/stores/auth'
 const authStore = useAuthStore();
 import { useField, useForm } from 'vee-validate';
 import * as yup from 'yup';
-import { alertMessage, alertPage } from "~/helpers/globalVariable";
+import { alertMessage, alertPage, resetAlert } from "~/helpers/globalVariable";
 import {navigateTo} from "nuxt/app";
 
 const schema = yup.object({
@@ -23,6 +23,16 @@ const login = handleSubmit( async (values) => {
   if (authStore.status_code === 200) {
     navigateTo('/')
   }
+});
+
+onBeforeRouteLeave((to, from, next) => {
+  resetAlert();
+  next();
+});
+
+onBeforeRouteUpdate((to, from, next) => {
+  resetAlert();
+  next();
 });
 </script>
 
