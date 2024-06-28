@@ -1,13 +1,6 @@
 <script setup lang="ts">
-import Cookies from 'js-cookie';
-import { ref } from 'vue';
-
-const userLogin = ref(null);
-
-const authUser = Cookies.get('auth-user');
-if (authUser) {
-  userLogin.value = JSON.parse(authUser);
-}
+import { useAuthStore } from '~/stores/auth'
+const authStore = useAuthStore();
 </script>
 
 <template>
@@ -20,14 +13,14 @@ if (authUser) {
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse justify-content-end" id="navbarNavAltMarkup">
-        <div v-if="!userLogin" class="navbar-nav gap-2 mt-4 pb-4">
+        <div v-if="!authStore.isLoggedIn" class="navbar-nav gap-2 mt-4 pb-4">
           <NuxtLink href="/register" class="button-outline-dark text-center">Register</NuxtLink>
           <NuxtLink href="/login" class="button-dark text-center">Login</NuxtLink>
         </div>
         <div v-else class="navbar-nav gap-2 mt-4 pb-4">
           <NuxtLink href="/user" class="button-dark text-center d-flex gap-2 align-items-center">
             <font-awesome-icon :icon="['fa', 'fa-circle-user']" style="font-size: 1.125rem;"/>
-            {{ userLogin?.name }}
+            {{ authStore.user.name }}
           </NuxtLink>
         </div>
       </div>
