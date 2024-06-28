@@ -4,7 +4,7 @@ const authStore = useAuthStore();
 import { useField, useForm } from 'vee-validate';
 import * as yup from 'yup';
 import { alertMessage, alertPage, resetAlert } from "~/helpers/globalVariable";
-import {navigateTo} from "nuxt/app";
+import { navigateTo } from "nuxt/app";
 
 const schema = yup.object({
   identifier: yup.string().required('Identifier is required'),
