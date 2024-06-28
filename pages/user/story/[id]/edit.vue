@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useCategoryStore } from '~/stores/category';
 import { useStoryStore } from '~/stores/story';
-import { Form, Field, ErrorMessage } from 'vee-validate';
-import { useNuxtApp, useRouter, useRoute } from '#app';
-import {imageUrl} from "~/helpers/globalVariable";
+import { Form, useForm, useField } from 'vee-validate';
+import { useNuxtApp, useRoute, navigateTo } from '#app';
+import { imageUrl, setAlert } from "~/helpers/globalVariable";
+import * as yup from "yup";
 
 definePageMeta({
   layout: 'user',
@@ -14,14 +15,28 @@ const categoryStore = useCategoryStore();
 const storyStore = useStoryStore();
 const contentEditor = ref(null);
 const updateDataImage = ref();
-const file = ref(null);
-const router = useRouter();
 const route = useRoute();
+const file = ref(null);
+const schema = yup.object({
+  title: yup.string().required('Title is required'),
+  category: yup.number().required('Category is required'),
+  content: yup.string().required('Content is required'),
+  cover_image: yup.mixed().required('Cover image is required'),
+});
 
+const { handleSubmit, resetForm, setValues } = useForm({
+  validationSchema: schema,
+});
+
+const { value: title, errorMessage: titleError } = useField('title');
+const { value: category, errorMessage: categoryError } = useField('category');
+const { value: content, errorMessage: contentError } = useField('content');
+const { value: cover_image, errorMessage: coverImageError } = useField('cover_image');
 const storyId = route.params.id;
 
 const previewImage = (e:any) => {
   file.value = e.target.files[0];
+  cover_image.value = file.value;
   if (!file.value) return;
   const reader = new FileReader();
   reader.onload = () => {
@@ -33,33 +48,31 @@ const previewImage = (e:any) => {
   reader.readAsDataURL(file.value);
 }
 
-const updateDataInput = ref({
-  title: '',
-  category: '',
-  content: ''
-});
-
 const loadStory = async () => {
   await storyStore.getStoryById(storyId);
   const story = storyStore.story;
-  updateDataInput.value.title = story.title;
-  updateDataInput.value.category = story.category.id;
-  updateDataInput.value.content = story.content;
-  updateDataImage.value = story.cover_image !== null ? imageUrl + story.cover_image.url : 'https://placehold.co/600x400?text=Image+Not+Found';
+  setValues({
+    title: story.title,
+    category: story.category.id,
+    content: story.content,
+    cover_image: story.cover_image ? story.cover_image.url : null,
+  });
+  updateDataImage.value = story.cover_image ? imageUrl + story.cover_image.url : 'https://placehold.co/600x400?text=Image+Not+Found';
 };
 
-const submitUpdate = async () => {
+const submitUpdate = handleSubmit(async (values) => {
   try {
     const updateFormStory = {
       data: {
-        title: updateDataInput.value.title,
-        category: updateDataInput.value.category,
-        content: updateDataInput.value.content,
+        title: values.title,
+        category: values.category,
+        content: values.content,
       }
     };
     await storyStore.updateStory(storyId, updateFormStory);
 
     if (storyStore.status_code === 200) {
+      setAlert('Successfully update story', 'Story');
       if (file.value) {
         if (storyStore.story?.cover_image?.id) {
           await storyStore.removeStoryImage(storyStore.story.cover_image.id);
@@ -74,22 +87,18 @@ const submitUpdate = async () => {
 
         try {
           await storyStore.uploadImageStory(formDataImage);
-          router.push('/user/story');
+          navigateTo('/user/story');
         } catch (error) {
-          console.error('Error uploading image:', error);
-          alert('Failed to upload the new profile picture.');
+          console.error(error.message);
         }
       } else {
-        router.push('/user/story');
+        navigateTo('/user/story');
       }
-    } else {
-      alert('Failed to update profile.');
     }
   } catch (error) {
-    console.error('Error update story:', error);
-    alert('Failed to update story.');
+    console.error(error.message);
   }
-};
+});
 
 await categoryStore.getAllCategory();
 await loadStory();
@@ -100,9 +109,11 @@ onMounted(() => {
     theme: 'snow',
     placeholder: 'Enter your content...',
   });
-  quill.root.innerHTML = updateDataInput.value.content;
+  quill.root.innerHTML = content.value;
   quill.on('text-change', () => {
-    updateDataInput.value.content = quill.root.innerHTML;
+    setValues({
+      content: quill.root.innerHTML,
+    });
   });
 });
 </script>
@@ -115,24 +126,25 @@ onMounted(() => {
         Edit Story
       </h5>
       <div class="wrapper-body">
-        <Form @submit="submitUpdate" enctype="multipart/form-data">
+        <form @submit="submitUpdate" enctype="multipart/form-data">
           <div class="row">
             <div class="col-12">
               <div class="mb-2">
                 <label for="title" class="form-label">Title</label>
-                <Field type="text" name="title" class="form-control" id="title" placeholder="Enter your title" v-model="updateDataInput.title" />
-                <ErrorMessage name="title" class="invalid-label" />
+                <input type="text" name="title" class="form-control" id="title" placeholder="Enter your title" v-model="title" />
+                <p class="invalid-label">{{ titleError }}</p>
               </div>
               <div class="mb-2">
                 <label for="category" class="form-label">Category</label>
-                <select required class="form-control" id="category" v-model="updateDataInput.category">
-                  <option value="">Select category story</option>
+                <select required class="form-control" id="category" v-model="category">
                   <option v-for="category in categoryStore.categoryAll" :value="category.id">{{ category.name }}</option>
                 </select>
+                <p class="invalid-label">{{ categoryError }}</p>
               </div>
               <div class="mb-2">
                 <label for="content" class="form-label">Content</label>
                 <div ref="contentEditor" style="height: 100px;"></div>
+                <p class="invalid-label">{{ contentError }}</p>
               </div>
               <div class="mb-2 d-flex gap-3 align-items-end">
                 <div class="wrapper d-flex flex-column">
@@ -140,9 +152,9 @@ onMounted(() => {
                   <img :src="updateDataImage" class="profile-image" alt="Profile Image" style="border-radius: 4px;"/>
                 </div>
                 <div class="wrapper">
-                  <Field type="file" name="cover_image" id="image" class="input-hide" @change="previewImage" />
+                  <input type="file" name="cover_image" id="image" class="input-hide" @change="previewImage" />
                   <label for="image" class="button-outline-dark w-100 text-center mt-3">Choose Image</label>
-                  <ErrorMessage name="cover_image" class="invalid-label" />
+                  <p class="invalid-label">{{ coverImageError }}</p>
                 </div>
               </div>
               <div class="d-flex gap-2 justify-content-end">
@@ -151,7 +163,7 @@ onMounted(() => {
               </div>
             </div>
           </div>
-        </Form>
+        </form>
       </div>
     </div>
   </div>
