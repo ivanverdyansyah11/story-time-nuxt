@@ -4,18 +4,21 @@ import Cookies from 'js-cookie'
 
 export default defineNuxtRouteMiddleware((to, from) => {
     const authStore = useAuthStore()
-    const token = ref(Cookies.get('auth-token'))
 
-    if (token.value !== undefined) {
-        authStore.user = JSON.parse(Cookies.get('auth-user'))
-        authStore.isLoggedIn = true
+    const authToken = useCookie('auth-token')
+    const authUser = useCookie('auth-user')
+
+    if(authToken.value) {
+        authStore.token = authToken.value
     }
 
-    if (authStore.isLoggedIn && (to.path === '/login' || to.path === '/register')) {
-        return navigateTo('/')
+    if(authUser.value) {
+        authStore.user = authUser.value
     }
 
-    if (!authStore.isLoggedIn && to.path.startsWith('/user')) {
+    if (!authStore.isLoggedIn && to.path !== '/login') {
         return navigateTo('/login')
+    } else if (authStore.isLoggedIn && (to.path === '/login' || to.path === '/register')) {
+        return navigateTo('/')
     }
 })
