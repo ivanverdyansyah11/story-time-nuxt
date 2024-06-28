@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useStoryStore } from "~/stores/story";
+import { alertPage, resetAlert, alertMessage, setAlert } from "~/helpers/globalVariable";
 import { formatDateTime } from "~/helpers/formatDate";
 import Cookies from "js-cookie";
-import Alert from '~/components/Alert.vue';
+import { navigateTo } from "nuxt/app";
 
 definePageMeta({
   layout: 'user',
@@ -10,29 +11,39 @@ definePageMeta({
 
 const storyStore = useStoryStore();
 const storyToDelete = ref(null);
-const showAlert = ref(false);
-const alertMessage = ref('');
 
 await storyStore.getStoryByAuthor(JSON.parse(Cookies.get('auth-user')).id)
 
 const confirmDeleteStory = async () => {
   if (storyToDelete.value) {
     await storyStore.deleteStory(storyToDelete.value.id);
-    if (!storyStore.error) {
-      alertMessage.value = 'Story deleted successfully!';
-      showAlert.value = true;
+    if (storyStore.status_code === 200) {
+      setAlert('Successfully delete story', 'Story');
     }
     if (storyToDelete.value.cover_image) {
       await storyStore.removeStoryImage(storyToDelete.value.cover_image.id);
     }
     storyToDelete.value = null;
+    navigateTo('/user/story')
   }
 };
+
+onBeforeRouteLeave((to, from, next) => {
+  resetAlert();
+  next();
+});
+
+onBeforeRouteUpdate((to, from, next) => {
+  resetAlert();
+  next();
+});
 </script>
 
 <template>
   <div class="col-6">
-    <Alert v-if="showAlert" :message="alertMessage" />
+    <div v-if="alertPage == 'Story'" class="alert alert-success w-100" role="alert">
+      {{ alertMessage }}
+    </div>
     <div class="card-user">
       <div class="wrapper-header d-flex align-items-center justify-content-between">
         <h5 class="header-title mb-0">Story List</h5>
