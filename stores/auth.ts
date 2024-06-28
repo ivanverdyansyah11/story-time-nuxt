@@ -6,11 +6,13 @@ import Cookies from 'js-cookie';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        isLoggedIn: false,
         token: '',
-        user: {},
+        user: null,
         status_code: null,
     }),
+    getters: {
+        isLoggedIn: (state) => state.token ? true : false,
+    },
     actions: {
         async loadUserFromCookies() {
             const token = Cookies.get('auth-token');
@@ -34,7 +36,6 @@ export const useAuthStore = defineStore('auth', {
                 });
                 this.token = response?.data.jwt;
                 this.user = response?.data.user;
-                this.isLoggedIn = true;
                 Cookies.set('auth-token', this.token);
                 Cookies.set('auth-user', JSON.stringify(this.user));
                 this.status_code = response?.data ? 200 : null;
@@ -98,7 +99,6 @@ export const useAuthStore = defineStore('auth', {
         async logout() {
             this.token = null;
             this.user = null;
-            this.isLoggedIn = false;
             Cookies.remove('auth-token');
             Cookies.remove('auth-user');
         },
