@@ -2,10 +2,11 @@
 import { ref, onMounted } from 'vue';
 import { useCategoryStore } from '~/stores/category';
 import { useStoryStore } from '~/stores/story';
-import { Form, Field, ErrorMessage, useForm, useField } from 'vee-validate';
+import { useForm, useField } from 'vee-validate';
 import { useNuxtApp } from '#app';
 import { navigateTo } from 'nuxt/app';
 import * as yup from 'yup';
+import { setAlert } from "~/helpers/globalVariable";
 
 definePageMeta({
   layout: 'user',
@@ -58,6 +59,7 @@ const submitCreate = handleSubmit(async (values) => {
     await storyStore.createStory(formData);
 
     if (storyStore.status_code === 200 && file.value) {
+      setAlert('Successfully create new story', 'Story');
       await storyStore.getAllStory();
       const formDataImage = new FormData();
       formDataImage.append('files', file.value);
@@ -111,8 +113,8 @@ onMounted(() => {
               </div>
               <div class="mb-2">
                 <label for="category" class="form-label">Category</label>
-                <select required class="form-control" id="category" v-model="category">
-                  <option value="">Select category story</option>
+                <select class="form-control" id="category" v-model="category">
+<!--                  <option value="">Select category story</option>-->
                   <option v-for="category in categoryStore.categoryAll" :value="category.id">{{ category.name }}</option>
                 </select>
                 <p class="invalid-label">{{ categoryError }}</p>
