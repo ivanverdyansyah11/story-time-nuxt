@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth';
-import {alertMessage, alertPage, imageUrl, resetAlert} from "~/helpers/globalVariable";
+import { alertMessage, alertPage, imageUrl, resetAlert } from "~/helpers/globalVariable";
 
 definePageMeta({
   layout: 'user',
@@ -21,7 +21,7 @@ onBeforeRouteUpdate((to, from, next) => {
 </script>
 
 <template>
-  <div class="col-6">
+  <div class="col-6" v-if="authStore.user">
     <div v-if="alertPage == 'Update'" class="alert alert-success w-100" role="alert">
       {{ alertMessage }}
     </div>
@@ -33,7 +33,7 @@ onBeforeRouteUpdate((to, from, next) => {
       <div class="wrapper-body">
         <div class="row">
           <div class="col-4">
-            <img :src="authStore.user.profile_picture ? imageUrl + authStore.user.profile_picture.url : 'https://placehold.co/600x400?text=Image+Not+Found'" class="profile-image" alt="Profile Image"/>
+            <img :src="authStore.user.profile_picture ? imageUrl + authStore.user.profile_picture?.url : 'https://placehold.co/600x400?text=Image+Not+Found'" class="profile-image" alt="Profile Image"/>
           </div>
           <div class="col-8 d-flex flex-column gap-3">
             <div class="wrapper-data d-flex">
