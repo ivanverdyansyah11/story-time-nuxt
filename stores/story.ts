@@ -170,10 +170,11 @@ export const useStoryStore = defineStore('storyStore', {
             this.error = null;
             try {
                 const token = Cookies.get('auth-token');
-                await fetch(`${apiUrl}stories/${storyId}`, {
+                const response = await fetch(`${apiUrl}stories/${storyId}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` },
                 })
+                this.status_code = response.data ? 200 : null;
                 await this.getStoryByAuthor(JSON.parse(Cookies.get('auth-user')).id)
             } catch (error) {
                 this.error = error;
